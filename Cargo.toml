@@ -1,0 +1,14 @@
+[package]
+name = "wordle_solve"
+version = "0.1.0"
+authors = ["Joe Hurdle joehurdle@gmail.com"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+rust-version = "1.76"
+publish = false
+
+[dependencies]
+eframe = "0.27.2"
+egui = "0.27.2"
+
+
