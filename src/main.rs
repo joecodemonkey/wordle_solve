@@ -72,14 +72,8 @@ struct WordleSolve {
 }
 
 #[derive(Debug, Clone)]
-struct WordleLetterStatistic {
-    letter: char,
-    score: f64
-}
-
-#[derive(Debug, Clone)]
 struct Wordletatistics {
-    letter_statistics: Vec<WordleLetterStatistic>
+    letter_statistics: Vec<std::collections::HashMap<char, f64>>
 }
 
 trait BuildStatistics {
@@ -88,7 +82,35 @@ trait BuildStatistics {
 
 impl BuildStatistics for Wordletatistics {
     fn build_statistics(&mut self, words: &Vec<String>, possible_words: Vec<usize>)  {
+
+        // reset us to 0
         self.letter_statistics = Vec::new();
+        for _ in 0..WORD_LENGTH {
+            self.letter_statistics.push(std::collections::HashMap::new());
+        }
+
+        // for every possible word
+        for word_idx in possible_words {
+
+            // snag the word from the word list
+            let word = words.iter().nth(word_idx).unwrap();
+
+            // loop over the letters
+            for letter_idx in 0..word.len() {
+                // get the letter
+                let val: char = word.chars().nth(letter_idx).unwrap();
+
+                // increment the value by 1 if it exists or set it to 1 if it does not
+                self.letter_statistics[letter_idx].entry(val).and_modify(|counter| *counter += 1.0f64).or_insert(1.0f64);
+            }
+        }
+
+        for stat in self.letter_statistics.iter_mut() {
+            let count = stat.iter().count() as f64;
+            for (_, val) in stat.iter_mut() {
+                *val /= count;
+            }
+        }
     }
 
 }
@@ -156,7 +178,7 @@ impl Guess for WordleSolve {
     }
     fn filter(&mut self) {
         if self.possible_words.is_empty() {
-            for idx in (0..self.downloaded_words.iter().len()) {
+            for idx in 0..self.downloaded_words.iter().len() {
                 self.possible_words.push(idx);
             }
         }
@@ -180,7 +202,7 @@ impl Guess for WordleSolve {
 
     fn guess_filter_word(guess: &WordleWord, word: &String) -> bool {
         for (index, letter) in guess.value.iter().enumerate() {
-            if(Self::guess_filter_letter(letter, word, index)) {
+            if Self::guess_filter_letter(letter, word, index) {
                 return true;
             }
         }
@@ -225,7 +247,7 @@ impl eframe::App for WordleSolve {
                     .labelled_by(name_label.id);
                 let download_button = egui::Button::new("↻");
 
-                if(ui.add(download_button).clicked()) {
+                if ui.add(download_button).clicked() {
                     self.download();
                 }
             });
@@ -243,13 +265,13 @@ impl eframe::App for WordleSolve {
                                 }
                                 WordleSquareState::Incorrect => {
                                     let button = egui::Button::new(value);
-                                    if(ui.add(button).clicked()) {
+                                    if ui.add(button).clicked() {
                                         self.words[row].value[col].state = WordleSquareState::Correct;
                                     }
                                 }
                                 WordleSquareState::Correct => {
                                     let button = egui::Button::new(value).fill(egui::Color32::GREEN);
-                                    if(ui.add(button).clicked()) {
+                                    if ui.add(button).clicked() {
                                         self.words[row].value[col].state = WordleSquareState::Present;
                                     }
                                 }
@@ -268,7 +290,7 @@ impl eframe::App for WordleSolve {
             });
             let guess_button = egui::Button::new("Guess");
             ui.add(guess_button);
-            let word_count = egui::Label::new(("Word Count: ".to_string() + &self.downloaded_words.len().to_string()));
+            let word_count = egui::Label::new("Word Count: ".to_string() + &self.downloaded_words.len().to_string());
             ui.add(word_count);
         });
     }
