@@ -4,9 +4,6 @@
 use std::error::Error;
 use eframe::egui;
 use reqwest;
-use error_chain::{error_chain, stringify_internal};
-use std::io::Read;
-use egui::WidgetType::Label;
 
 const WORD_LENGTH: usize = 5;
 const MAX_ATTEMPTS: usize = 5;
@@ -20,10 +17,6 @@ fn main() -> Result<(), eframe::Error> {
 
     let mut app = WordleSolve::default();
 
-    for mut word in app.words[0].value.iter_mut() {
-        word.state = WordleSquareState::Editable;
-    }
-
     eframe::run_native(
         "Wordle Solver",
         options,
@@ -36,7 +29,6 @@ fn main() -> Result<(), eframe::Error> {
 #[derive(Debug, Clone)]
 enum WordleSquareState {
     Disabled,
-    Editable,
     Incorrect,
     Correct,
     Present,
@@ -52,7 +44,7 @@ impl Default for WordleSquareState {
 struct WordleSquare {
     // a char would be more efficient here for storage, but would
     // require conversion to string at runtime
-    value: String,
+    value: char,
     state: WordleSquareState,
 }
 
@@ -76,7 +68,29 @@ struct WordleSolve {
     guess: String,
     guess_num: usize,
     downloaded_words: Vec<String>,
-    possible_words: Vec<usize>,
+    possible_words: Vec<usize>
+}
+
+#[derive(Debug, Clone)]
+struct WordleLetterStatistic {
+    letter: char,
+    score: f64
+}
+
+#[derive(Debug, Clone)]
+struct Wordletatistics {
+    letter_statistics: Vec<WordleLetterStatistic>
+}
+
+trait BuildStatistics {
+    fn build_statistics(&mut self, words: &Vec<String>, possible_words: Vec<usize>) ;
+}
+
+impl BuildStatistics for Wordletatistics {
+    fn build_statistics(&mut self, words: &Vec<String>, possible_words: Vec<usize>)  {
+        self.letter_statistics = Vec::new();
+    }
+
 }
 
 impl Default for WordleSolve {
@@ -108,6 +122,13 @@ impl Download for WordleSolve {
                 content.split("\n").for_each(|s| {
                     self.downloaded_words.push(s.to_string());
                 });
+                if self.downloaded_words.iter().count() > 0 {
+                    self.guess_num = 0;
+                    self.guess = "".to_string();
+                    self.words = vec![WordleWord::default(); 6];
+                    self.possible_words.clear();
+                    self.guess();
+                }
             }
             Err(e) => {
                 println!("Error: {}", e);
@@ -118,9 +139,9 @@ impl Download for WordleSolve {
 }
 
 trait Guess {
-    fn guess(&mut self) -> Result<(), Box<dyn Error>>;
+    fn guess(&mut self);
 
-    fn filter(&mut self) -> Result<(), Box<dyn Error>>;
+    fn filter(&mut self);
 
     fn filter_word(&self, word: &String) -> bool;
 
@@ -130,47 +151,30 @@ trait Guess {
 }
 
 impl Guess for WordleSolve {
-    fn guess(&mut self) -> Result<(), Box<dyn Error>> {
-        self.filter()?;
-        Ok(())
+    fn guess(&mut self) {
+        self.filter();
     }
-    fn filter(&mut self) -> Result<(), Box<dyn Error>> {
-        self.possible_words.clear();
-
-        // for each word we've downloaded
-        for (index, word) in self.downloaded_words.iter ().enumerate() {
-            if !self.filter_word(word) {
-                self.possible_words.push(index);
+    fn filter(&mut self) {
+        if self.possible_words.is_empty() {
+            for idx in (0..self.downloaded_words.iter().len()) {
+                self.possible_words.push(idx);
             }
         }
-
-        Ok(())
+        let mut possible_words: Vec<usize> = Vec::new();
+        for (idx, word_idx) in self.possible_words.iter().enumerate() {
+            if self.filter_word(self.downloaded_words.get(*word_idx).unwrap()) {
+                possible_words.push(*word_idx);
+            }
+        }
+        std::mem::swap(&mut self.possible_words, &mut possible_words);
     }
 
-    fn guess_filter_letter(letter: &WordleSquare, word: &String, idx: usize) -> bool {
-
-        match letter.state {
-            WordleSquareState::Correct => {
-                if letter.value.chars().nth(0).unwrap() != word.chars().nth(idx).unwrap() {
-                    return true;
-                }
+    fn filter_word(&self, word: &String) -> bool {
+        for guess in self.words.iter() {
+            if Self::guess_filter_word(guess, word) {
+                return true;
             }
-            WordleSquareState::Incorrect => {
-                if letter.value.chars().nth(0).unwrap() == word.chars().nth(idx).unwrap() {
-                    return true;
-                }
-                if word.contains(letter.value.as_str()) {
-                    return true;
-                }
-            }
-            WordleSquareState::Present => {
-                if !word.contains(letter.value.as_str()) {
-                    return true;
-                }
-            }
-            _ => {}
         }
-
         false
     }
 
@@ -183,12 +187,30 @@ impl Guess for WordleSolve {
         false
     }
 
-    fn filter_word(&self, word: &String) -> bool {
-        for guess in self.words.iter() {
-            if Self::guess_filter_word(guess, word) {
-                return true;
+    fn guess_filter_letter(letter: &WordleSquare, word: &String, idx: usize) -> bool {
+
+        match letter.state {
+            WordleSquareState::Correct => {
+                if letter.value != word.chars().nth(idx).unwrap() {
+                    return true;
+                }
             }
+            WordleSquareState::Incorrect => {
+                if letter.value == word.chars().nth(idx).unwrap() {
+                    return true;
+                }
+                if word.contains(letter.value) {
+                    return true;
+                }
+            }
+            WordleSquareState::Present => {
+                if !word.contains(letter.value) {
+                    return true;
+                }
+            }
+            _ => {}
         }
+
         false
     }
 }
@@ -204,10 +226,7 @@ impl eframe::App for WordleSolve {
                 let download_button = egui::Button::new("↻");
 
                 if(ui.add(download_button).clicked()) {
-
-                    self.download().unwrap();
-
-                    //update_words(self);
+                    self.download();
                 }
             });
 
@@ -216,25 +235,41 @@ impl eframe::App for WordleSolve {
                 while row < MAX_ATTEMPTS {
                         let mut col: usize = 0;
                         while col < WORD_LENGTH {
-                            if matches!(self.words[row].value[col].state, WordleSquareState::Editable) {
-                                let text_edit = egui::TextEdit::singleline(&mut self.words[row].value[col].value)
-                                    .char_limit(1);
-                                ui.add(text_edit);
-                            } else {
-                                let text_edit = egui::TextEdit::singleline(&mut self.words[row].value[col].value)
-                                    .char_limit(1).interactive(false);
-                                ui.add(text_edit);
+                            let mut value : String = self.words[row].value[col].value.to_string();
+                            match self.words[row].value[col].state {
+                                WordleSquareState::Disabled => {
+                                    let button = egui::Button::new(" ");
+                                    ui.add_enabled(false, button);
+                                }
+                                WordleSquareState::Incorrect => {
+                                    let button = egui::Button::new(value);
+                                    if(ui.add(button).clicked()) {
+                                        self.words[row].value[col].state = WordleSquareState::Correct;
+                                    }
+                                }
+                                WordleSquareState::Correct => {
+                                    let button = egui::Button::new(value).fill(egui::Color32::GREEN);
+                                    if(ui.add(button).clicked()) {
+                                        self.words[row].value[col].state = WordleSquareState::Present;
+                                    }
+                                }
+                                WordleSquareState::Present => {
+                                    let button = egui::Button::new(value).fill(egui::Color32::YELLOW);
+                                    if ui.add(button).clicked() {
+                                        self.words[row].value[col].state = WordleSquareState::Incorrect;
+                                    }
+                                }
                             }
                             col += 1;
                         }
                         ui.end_row();
                     row += 1;
                 }
-                let guess_button = egui::Button::new("Guess");
-                ui.add(guess_button);
-                let word_count = egui::Label::new(("Word Count: ".to_string() + &self.downloaded_words.len().to_string()));
-                ui.add(word_count);
             });
+            let guess_button = egui::Button::new("Guess");
+            ui.add(guess_button);
+            let word_count = egui::Label::new(("Word Count: ".to_string() + &self.downloaded_words.len().to_string()));
+            ui.add(word_count);
         });
     }
 }
