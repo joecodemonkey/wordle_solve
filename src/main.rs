@@ -28,23 +28,17 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-#[derive(Debug, Clone, Default)]
-struct WordleSquare {
-    // a char would be more efficient here for storage, but would
-    // require conversion to string at runtime
-    value: char,
-    state: wordle::SquareState,
-}
+
 
 #[derive(Debug, Clone)]
 struct WordleWord {
-    value: Vec<WordleSquare>,
+    value: Vec<wordle::Letter>,
 }
 
 impl Default for WordleWord {
     fn default() -> Self {
         Self {
-            value: vec![WordleSquare::default(); WORD_LENGTH],
+            value: vec![Letter::default(); WORD_LENGTH],
         }
     }
 }
@@ -210,15 +204,15 @@ impl WordleSolve {
         false
     }
 
-    fn guess_filter_letter(letter: &WordleSquare, word: &String, idx: usize) -> bool {
+    fn guess_filter_letter(letter: &Letter, word: &String, idx: usize) -> bool {
 
         match letter.state {
-            SquareState::Correct => {
+            LetterState::Correct => {
                 if letter.value != word.chars().nth(idx).unwrap() {
                     return true;
                 }
             }
-            SquareState::Incorrect => {
+            LetterState::Incorrect => {
                 if letter.value == word.chars().nth(idx).unwrap() {
                     return true;
                 }
@@ -226,7 +220,7 @@ impl WordleSolve {
                     return true;
                 }
             }
-            SquareState::Present => {
+            LetterState::Present => {
                 if !word.contains(letter.value) {
                     return true;
                 }
@@ -259,26 +253,26 @@ impl eframe::App for WordleSolve {
                         let value = col.value.to_string();
                         let mut state = &mut col.state;
                             match state {
-                                SquareState::Disabled => {
+                                LetterState::Disabled => {
                                     let button = egui::Button::new(" ");
                                     ui.add_enabled(false, button);
                                 }
-                                SquareState::Incorrect => {
+                                LetterState::Incorrect => {
                                     let button = egui::Button::new(value);
                                     if ui.add(button).clicked() {
-                                        state.toggle();
+                                        col.toggle();
                                     }
                                 }
-                                SquareState::Correct => {
+                                LetterState::Correct => {
                                     let button = egui::Button::new(value).fill(egui::Color32::GREEN);
                                     if ui.add(button).clicked() {
-                                        state.toggle();
+                                        col.toggle();
                                     }
                                 }
-                                SquareState::Present => {
+                                LetterState::Present => {
                                     let button = egui::Button::new(value).fill(egui::Color32::YELLOW);
                                     if ui.add(button).clicked() {
-                                        state.toggle();
+                                        col.toggle();
                                     }
                                 }
                             }
@@ -294,7 +288,7 @@ impl eframe::App for WordleSolve {
                     let word = self.words.iter_mut().nth(self.guess_num - 1).unwrap();
                     for (idx, letter) in self.guess.chars().enumerate() {
                         word.value[idx].value = letter.clone();
-                        word.value[idx].state = SquareState::Incorrect;
+                        word.value[idx].state = LetterState::Incorrect;
                     }
                 }
             }
