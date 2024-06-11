@@ -68,32 +68,31 @@ struct WordleSolve {
     guess: String,
     guess_num: usize,
     downloaded_words: Vec<String>,
-    possible_words: Vec<usize>
+    possible_words: Vec<usize>,
+    statistics: WordleStatistics,
 }
 
 #[derive(Debug, Clone)]
-struct Wordletatistics {
-    letter_statistics: Vec<std::collections::HashMap<char, f64>>
+struct WordleStatistics {
+    letters: Vec<std::collections::HashMap<char, f64>>
 }
 
-trait BuildStatistics {
-    fn build_statistics(&mut self, words: &Vec<String>, possible_words: Vec<usize>) ;
-}
+impl WordleStatistics {
+    fn new(words: &Vec<String>, possible_words: &Vec<usize>) ->WordleStatistics  {
 
-impl BuildStatistics for Wordletatistics {
-    fn build_statistics(&mut self, words: &Vec<String>, possible_words: Vec<usize>)  {
+         let mut ret = WordleStatistics {letters: Vec::new() };
 
         // reset us to 0
-        self.letter_statistics = Vec::new();
+
         for _ in 0..WORD_LENGTH {
-            self.letter_statistics.push(std::collections::HashMap::new());
+            ret.letters.push(std::collections::HashMap::new());
         }
 
         // for every possible word
         for word_idx in possible_words {
 
             // snag the word from the word list
-            let word = words.iter().nth(word_idx).unwrap();
+            let word = words.iter().nth(*word_idx).unwrap();
 
             // loop over the letters
             for letter_idx in 0..word.len() {
@@ -101,16 +100,33 @@ impl BuildStatistics for Wordletatistics {
                 let val: char = word.chars().nth(letter_idx).unwrap();
 
                 // increment the value by 1 if it exists or set it to 1 if it does not
-                self.letter_statistics[letter_idx].entry(val).and_modify(|counter| *counter += 1.0f64).or_insert(1.0f64);
+                ret.letters[letter_idx].entry(val).and_modify(|counter| *counter += 1.0f64).or_insert(1.0f64);
             }
         }
 
-        for stat in self.letter_statistics.iter_mut() {
+        for stat in ret.letters.iter_mut() {
             let count = stat.iter().count() as f64;
             for (_, val) in stat.iter_mut() {
                 *val /= count;
             }
         }
+        ret
+    }
+
+    fn score(&self, word: &String) -> f64 {
+
+        let mut score = 0.0;
+
+        for (idx, letter) in word.chars().enumerate() {
+            match self.letters.iter().nth(idx) {
+                Some(map) => match map.get(&letter) {
+                    Some(value) => score += value,
+                    None => return 0.0f64 // if there is no value for letter at this pos, word is impossible
+                }
+                None => { }
+            }
+        }
+        score
     }
 
 }
@@ -123,18 +139,14 @@ impl Default for WordleSolve {
             guess: "".to_string(),
             guess_num: 0,
             downloaded_words: Vec::new(),
-            possible_words: Vec::new()
+            possible_words: Vec::new(),
+            statistics: WordleStatistics::new(&Vec::new(), &Vec::new()),
         }
     }
 }
-
-trait Download {
-    fn download(&mut self) -> Result<(), Box<dyn Error>>;
-}
-impl Download for WordleSolve {
+impl WordleSolve {
     fn download(&mut self) -> Result<(), Box<dyn Error>> {
         // Download the file content
-
 
         let mut response = reqwest::blocking::get(self.words_url.as_str())?;
 
@@ -158,23 +170,20 @@ impl Download for WordleSolve {
         }
         Ok(())
     }
-}
-
-trait Guess {
-    fn guess(&mut self);
-
-    fn filter(&mut self);
-
-    fn filter_word(&self, word: &String) -> bool;
-
-    fn guess_filter_word(guess: &WordleWord, word: &String) -> bool;
-
-    fn guess_filter_letter(letter: &WordleSquare,  word: &String, idx: usize) -> bool;
-}
-
-impl Guess for WordleSolve {
     fn guess(&mut self) {
         self.filter();
+        self.statistics = WordleStatistics::new(&self.downloaded_words, &self.possible_words);
+        let mut max_score = 0.0f64;
+        for word_idx in self.possible_words.iter() {
+            let word = self.downloaded_words.iter().nth(*word_idx).unwrap();
+            let score = self.statistics.score(word);
+            if score > max_score {
+                max_score = score;
+                self.guess = word.clone();
+            }
+        }
+        println!("max score is {}", max_score);
+        println!("guess is {}", self.guess);
     }
     fn filter(&mut self) {
         if self.possible_words.is_empty() {
