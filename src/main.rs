@@ -4,6 +4,8 @@
 use std::error::Error;
 use eframe::egui;
 use reqwest;
+mod wordle;
+use wordle::*;
 
 const WORD_LENGTH: usize = 5;
 const MAX_ATTEMPTS: usize = 5;
@@ -15,7 +17,7 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
-    let mut app = WordleSolve::default();
+    let app = WordleSolve::default();
 
     eframe::run_native(
         "Wordle Solver",
@@ -26,26 +28,12 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-#[derive(Debug, Clone)]
-enum WordleSquareState {
-    Disabled,
-    Incorrect,
-    Correct,
-    Present,
-}
-
-impl Default for WordleSquareState {
-    fn default() -> Self {
-        WordleSquareState::Disabled
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 struct WordleSquare {
     // a char would be more efficient here for storage, but would
     // require conversion to string at runtime
     value: char,
-    state: WordleSquareState,
+    state: wordle::SquareState,
 }
 
 #[derive(Debug, Clone)]
@@ -148,7 +136,7 @@ impl WordleSolve {
     fn download(&mut self) -> Result<(), Box<dyn Error>> {
         // Download the file content
 
-        let mut response = reqwest::blocking::get(self.words_url.as_str())?;
+        let response = reqwest::blocking::get(self.words_url.as_str())?;
 
         match response.text() {
             Ok(content) => {
@@ -196,7 +184,7 @@ impl WordleSolve {
         }
 
         let mut possible_words: Vec<usize> = Vec::new();
-        for (idx, word_idx) in self.possible_words.iter().enumerate() {
+        for word_idx in self.possible_words.iter() {
             if !self.filter_word(self.downloaded_words.get(*word_idx).unwrap()) {
                 possible_words.push(*word_idx);
             }
@@ -225,12 +213,12 @@ impl WordleSolve {
     fn guess_filter_letter(letter: &WordleSquare, word: &String, idx: usize) -> bool {
 
         match letter.state {
-            WordleSquareState::Correct => {
+            SquareState::Correct => {
                 if letter.value != word.chars().nth(idx).unwrap() {
                     return true;
                 }
             }
-            WordleSquareState::Incorrect => {
+            SquareState::Incorrect => {
                 if letter.value == word.chars().nth(idx).unwrap() {
                     return true;
                 }
@@ -238,7 +226,7 @@ impl WordleSolve {
                     return true;
                 }
             }
-            WordleSquareState::Present => {
+            SquareState::Present => {
                 if !word.contains(letter.value) {
                     return true;
                 }
@@ -261,7 +249,7 @@ impl eframe::App for WordleSolve {
                 let download_button = egui::Button::new("↻");
 
                 if ui.add(download_button).clicked() {
-                    self.download();
+                    let _ = self.download();
                 }
             });
 
@@ -270,28 +258,29 @@ impl eframe::App for WordleSolve {
                 while row < MAX_ATTEMPTS {
                         let mut col: usize = 0;
                         while col < WORD_LENGTH {
-                            let mut value : String = self.words[row].value[col].value.to_string();
+                            let value : String = self.words[row].value[col].value.to_string();
+                            //let mut state :self.words[row].value[col].state;
                             match self.words[row].value[col].state {
-                                WordleSquareState::Disabled => {
+                                SquareState::Disabled => {
                                     let button = egui::Button::new(" ");
                                     ui.add_enabled(false, button);
                                 }
-                                WordleSquareState::Incorrect => {
+                                SquareState::Incorrect => {
                                     let button = egui::Button::new(value);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state = WordleSquareState::Correct;
+                                        self.words[row].value[col].state.toggle();
                                     }
                                 }
-                                WordleSquareState::Correct => {
+                                SquareState::Correct => {
                                     let button = egui::Button::new(value).fill(egui::Color32::GREEN);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state = WordleSquareState::Present;
+                                        self.words[row].value[col].state.toggle();
                                     }
                                 }
-                                WordleSquareState::Present => {
+                                SquareState::Present => {
                                     let button = egui::Button::new(value).fill(egui::Color32::YELLOW);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state = WordleSquareState::Incorrect;
+                                        self.words[row].value[col].state.toggle();
                                     }
                                 }
                             }
@@ -303,13 +292,13 @@ impl eframe::App for WordleSolve {
             });
             let guess_button = egui::Button::new("Guess");
             if ui.add(guess_button).clicked() {
-                if(self.guess_num < MAX_ATTEMPTS) {
+                if self.guess_num < MAX_ATTEMPTS {
                     self.guess_num += 1;
                     self.filter();
-                    let mut word = self.words.iter_mut().nth(self.guess_num - 1).unwrap();
+                    let word = self.words.iter_mut().nth(self.guess_num - 1).unwrap();
                     for (idx, letter) in self.guess.chars().enumerate() {
                         word.value[idx].value = letter.clone();
-                        word.value[idx].state = WordleSquareState::Incorrect;
+                        word.value[idx].state = SquareState::Incorrect;
                     }
                 }
             }
