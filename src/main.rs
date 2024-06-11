@@ -191,9 +191,13 @@ impl WordleSolve {
                 self.possible_words.push(idx);
             }
         }
+        if self.guess_num == 0 {
+            return;
+        }
+
         let mut possible_words: Vec<usize> = Vec::new();
         for (idx, word_idx) in self.possible_words.iter().enumerate() {
-            if self.filter_word(self.downloaded_words.get(*word_idx).unwrap()) {
+            if !self.filter_word(self.downloaded_words.get(*word_idx).unwrap()) {
                 possible_words.push(*word_idx);
             }
         }
@@ -298,7 +302,17 @@ impl eframe::App for WordleSolve {
                 }
             });
             let guess_button = egui::Button::new("Guess");
-            ui.add(guess_button);
+            if ui.add(guess_button).clicked() {
+                if(self.guess_num < MAX_ATTEMPTS) {
+                    self.guess_num += 1;
+                    self.filter();
+                    let mut word = self.words.iter_mut().nth(self.guess_num - 1).unwrap();
+                    for (idx, letter) in self.guess.chars().enumerate() {
+                        word.value[idx].value = letter.clone();
+                        word.value[idx].state = WordleSquareState::Incorrect;
+                    }
+                }
+            }
             let word_count = egui::Label::new("Word Count: ".to_string() + &self.downloaded_words.len().to_string());
             ui.add(word_count);
         });
