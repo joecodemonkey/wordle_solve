@@ -254,13 +254,11 @@ impl eframe::App for WordleSolve {
             });
 
             egui::Grid::new("wordle_squares").show(ui, |ui| {
-                let mut row: usize = 0;
-                while row < MAX_ATTEMPTS {
-                        let mut col: usize = 0;
-                        while col < WORD_LENGTH {
-                            let value : String = self.words[row].value[col].value.to_string();
-                            //let mut state :self.words[row].value[col].state;
-                            match self.words[row].value[col].state {
+                for mut row in self.words.iter_mut() {
+                    for mut col in row.value.iter_mut() {
+                        let value = col.value.to_string();
+                        let mut state = &mut col.state;
+                            match state {
                                 SquareState::Disabled => {
                                     let button = egui::Button::new(" ");
                                     ui.add_enabled(false, button);
@@ -268,26 +266,24 @@ impl eframe::App for WordleSolve {
                                 SquareState::Incorrect => {
                                     let button = egui::Button::new(value);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state.toggle();
+                                        state.toggle();
                                     }
                                 }
                                 SquareState::Correct => {
                                     let button = egui::Button::new(value).fill(egui::Color32::GREEN);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state.toggle();
+                                        state.toggle();
                                     }
                                 }
                                 SquareState::Present => {
                                     let button = egui::Button::new(value).fill(egui::Color32::YELLOW);
                                     if ui.add(button).clicked() {
-                                        self.words[row].value[col].state.toggle();
+                                        state.toggle();
                                     }
                                 }
                             }
-                            col += 1;
                         }
                         ui.end_row();
-                    row += 1;
                 }
             });
             let guess_button = egui::Button::new("Guess");
