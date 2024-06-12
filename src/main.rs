@@ -7,9 +7,6 @@ use reqwest;
 mod wordle;
 use wordle::*;
 
-const WORD_LENGTH: usize = 5;
-const MAX_ATTEMPTS: usize = 5;
-
 fn main() -> Result<(), eframe::Error> {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
@@ -28,25 +25,10 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-
-
-#[derive(Debug, Clone)]
-struct WordleWord {
-    value: Vec<wordle::Letter>,
-}
-
-impl Default for WordleWord {
-    fn default() -> Self {
-        Self {
-            value: vec![Letter::default(); WORD_LENGTH],
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 struct WordleSolve {
     words_url: String,
-    words: Vec<WordleWord>,
+    board: Board,
     guess: String,
     guess_num: usize,
     downloaded_words: Vec<String>,
@@ -66,7 +48,7 @@ impl WordleStatistics {
 
         // reset us to 0
 
-        for _ in 0..WORD_LENGTH {
+        for _ in 0..wordle::MAX_LETTERS {
             ret.letters.push(std::collections::HashMap::new());
         }
 
@@ -117,7 +99,7 @@ impl Default for WordleSolve {
     fn default() -> Self {
         Self {
             words_url: "https://raw.githubusercontent.com/tabatkins/wordle-list/main/words".to_owned(),
-            words: vec![WordleWord::default(); 6],
+            board: Board::new(),
             guess: "".to_string(),
             guess_num: 0,
             downloaded_words: Vec::new(),
@@ -141,7 +123,7 @@ impl WordleSolve {
                 if self.downloaded_words.iter().count() > 0 {
                     self.guess_num = 0;
                     self.guess = "".to_string();
-                    self.words = vec![WordleWord::default(); 6];
+                    self.board = Board::new();
                     self.possible_words.clear();
                     self.guess();
                 }
@@ -187,7 +169,7 @@ impl WordleSolve {
     }
 
     fn filter_word(&self, word: &String) -> bool {
-        for guess in self.words.iter() {
+        for guess in self.board.iter() {
             if Self::guess_filter_word(guess, word) {
                 return true;
             }
@@ -195,8 +177,8 @@ impl WordleSolve {
         false
     }
 
-    fn guess_filter_word(guess: &WordleWord, word: &String) -> bool {
-        for (index, letter) in guess.value.iter().enumerate() {
+    fn guess_filter_word(guess: &wordle::Word, word: &String) -> bool {
+        for (index, letter) in guess.iter().enumerate() {
             if Self::guess_filter_letter(letter, word, index) {
                 return true;
             }
@@ -248,7 +230,7 @@ impl eframe::App for WordleSolve {
             });
 
             egui::Grid::new("wordle_squares").show(ui, |ui| {
-                for mut row in self.words.iter_mut() {
+                for mut row in self.board.iter_mut() {
                     for mut col in row.value.iter_mut() {
                         let value = col.value.to_string();
                         let mut state = &mut col.state;
@@ -285,7 +267,7 @@ impl eframe::App for WordleSolve {
                 if self.guess_num < MAX_ATTEMPTS {
                     self.guess_num += 1;
                     self.filter();
-                    let word = self.words.iter_mut().nth(self.guess_num - 1).unwrap();
+                    let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
                     for (idx, letter) in self.guess.chars().enumerate() {
                         word.value[idx].value = letter.clone();
                         word.value[idx].state = LetterState::Incorrect;
