@@ -99,7 +99,7 @@ impl Default for WordleSolve {
     fn default() -> Self {
         Self {
             words_url: "https://raw.githubusercontent.com/tabatkins/wordle-list/main/words".to_owned(),
-            board: Board::new(),
+            board: Board::default(),
             guess: "".to_string(),
             guess_num: 0,
             downloaded_words: Vec::new(),
@@ -123,7 +123,7 @@ impl WordleSolve {
                 if self.downloaded_words.iter().count() > 0 {
                     self.guess_num = 0;
                     self.guess = "".to_string();
-                    self.board = Board::new();
+                    self.board = Board::default();
                     self.possible_words.clear();
                     self.guess();
                 }
