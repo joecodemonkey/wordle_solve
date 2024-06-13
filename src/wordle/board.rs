@@ -1,5 +1,5 @@
 use egui::Vec2;
-use super::Word;
+use super::{Letter, Word};
 
 #[derive(Debug, Clone)]
 pub struct Board {
@@ -76,5 +76,12 @@ impl Board {
             board: self,
             index: 0,
         }
+    }
+}
+
+impl Board {
+    // Method to create a mutable iterator over the words
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<Vec<Letter>> {
+        self.words.iter_mut()
     }
 }

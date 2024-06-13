@@ -231,10 +231,10 @@ impl eframe::App for WordleSolve {
 
             egui::Grid::new("wordle_squares").show(ui, |ui| {
                 for mut row in self.board.iter_mut() {
-                    for mut col in row.value.iter_mut() {
+                    for mut col in row.iter_mut() {
                         let value = col.value.to_string();
-                        let mut state = &mut col.state;
-                            match state {
+                        let mut state = &mut col;
+                            match col.state {
                                 LetterState::Disabled => {
                                     let button = egui::Button::new(" ");
                                     ui.add_enabled(false, button);
@@ -269,8 +269,8 @@ impl eframe::App for WordleSolve {
                     self.filter();
                     let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
                     for (idx, letter) in self.guess.chars().enumerate() {
-                        word.value[idx].value = letter.clone();
-                        word.value[idx].state = LetterState::Incorrect;
+                        word[idx].value = letter.clone();
+                        word[idx].state = LetterState::Incorrect;
                     }
                 }
             }
