@@ -85,3 +85,23 @@ impl Board {
         self.words.iter_mut()
     }
 }
+
+
+#[cfg(test)]
+mod letter_tests {
+    use crate::wordle::LetterState;
+    use super::*;
+
+    #[test]
+    fn default() {
+        let result: Board = Default::default();
+        assert_eq!(result.iter().count(), MAX_ATTEMPTS);
+        for word in result.iter() {
+            assert_eq!(word.iter().count(), MAX_LETTERS);
+            for letter in word.iter() {
+                assert_eq!(letter.value, ' ');
+                assert_eq!(letter.get_state(), LetterState::Disabled);
+            }
+        }
+    }
+}

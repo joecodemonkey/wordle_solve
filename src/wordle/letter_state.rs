@@ -16,7 +16,7 @@
     impl LetterState {
         pub fn toggle(&mut self) -> LetterState {
             *self = match self {
-                LetterState::Disabled => LetterState::Incorrect,
+                LetterState::Disabled =>  LetterState::Disabled,
                 LetterState::Incorrect => LetterState::Correct,
                 LetterState::Correct => LetterState::Present,
                 LetterState::Present => LetterState::Incorrect,
@@ -39,12 +39,11 @@
         #[test]
         fn toggle() {
             let mut result: LetterState = LetterState::Disabled;
-
+            assert_eq!(result.toggle(), LetterState::Disabled);
+            result = LetterState::Present;
             assert_eq!(result.toggle(), LetterState::Incorrect);
             assert_eq!(result.toggle(), LetterState::Correct);
             assert_eq!(result.toggle(), LetterState::Present);
             assert_eq!(result.toggle(), LetterState::Incorrect);
         }
     }
-
-

@@ -188,7 +188,7 @@ impl WordleSolve {
 
     fn guess_filter_letter(letter: &Letter, word: &String, idx: usize) -> bool {
 
-        match letter.state {
+        match letter.get_state() {
             LetterState::Correct => {
                 if letter.value != word.chars().nth(idx).unwrap() {
                     return true;
@@ -232,34 +232,11 @@ impl eframe::App for WordleSolve {
             egui::Grid::new("wordle_squares").show(ui, |ui| {
                 for mut row in self.board.iter_mut() {
                     for mut col in row.iter_mut() {
-                        let value = col.value.to_string();
-                        let mut state = &mut col;
-                            match col.state {
-                                LetterState::Disabled => {
-                                    let button = egui::Button::new(" ");
-                                    ui.add_enabled(false, button);
-                                }
-                                LetterState::Incorrect => {
-                                    let button = egui::Button::new(value);
-                                    if ui.add(button).clicked() {
-                                        col.toggle();
-                                    }
-                                }
-                                LetterState::Correct => {
-                                    let button = egui::Button::new(value).fill(egui::Color32::GREEN);
-                                    if ui.add(button).clicked() {
-                                        col.toggle();
-                                    }
-                                }
-                                LetterState::Present => {
-                                    let button = egui::Button::new(value).fill(egui::Color32::YELLOW);
-                                    if ui.add(button).clicked() {
-                                        col.toggle();
-                                    }
-                                }
-                            }
+                        if ui.add(egui::Button::new(col.value.to_string()).fill(col.get_color())).clicked() {
+                            col.toggle();
                         }
-                        ui.end_row();
+                    }
+                    ui.end_row();
                 }
             });
             let guess_button = egui::Button::new("Guess");
@@ -270,7 +247,7 @@ impl eframe::App for WordleSolve {
                     let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
                     for (idx, letter) in self.guess.chars().enumerate() {
                         word[idx].value = letter.clone();
-                        word[idx].state = LetterState::Incorrect;
+                        word[idx].set_state(LetterState::Incorrect);
                     }
                 }
             }
