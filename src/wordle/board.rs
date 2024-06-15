@@ -1,26 +1,18 @@
-use egui::Vec2;
-use super::{Letter, Word};
+use std::default::Default;
+use super::{Letter, MAX_LETTERS, Word};
 
 #[derive(Debug, Clone)]
 pub struct Board {
     words: Vec<Word>,
 }
 
-pub const MAX_LETTERS: usize = 5;
 pub const MAX_ATTEMPTS: usize = 6;
-
 
 impl Default for Board {
     fn default() -> Self {
-        let mut board = Board {
-            words: Vec::new(),
-        };
-        board.words.resize(MAX_ATTEMPTS, Word::new());
-        for word in board.words.iter_mut() {
-            word.resize(MAX_LETTERS, Default::default());
+        Board {
+            words: vec![Default::default(); MAX_ATTEMPTS],
         }
-
-        board
     }
 }
 
@@ -78,14 +70,6 @@ impl Board {
         }
     }
 }
-
-impl Board {
-    // Method to create a mutable iterator over the words
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<Vec<Letter>> {
-        self.words.iter_mut()
-    }
-}
-
 
 #[cfg(test)]
 mod letter_tests {
