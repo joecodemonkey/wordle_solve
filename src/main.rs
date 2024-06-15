@@ -87,8 +87,8 @@ impl eframe::App for WordleSolve {
             });
 
             egui::Grid::new("wordle_squares").show(ui, |ui| {
-                for mut row in self.board.iter_mut() {
-                    for mut col in row.iter_mut() {
+                for row in self.board.words.iter_mut() {
+                    for col in row.letters.iter_mut() {
                         if ui.add(egui::Button::new(col.value.to_string()).fill(col.get_color())).clicked() {
                             col.toggle();
                         }
@@ -100,16 +100,15 @@ impl eframe::App for WordleSolve {
             if ui.add(guess_button).clicked() {
                 if self.guess_num < MAX_ATTEMPTS {
                     self.guess_num += 1;
-                    self.filter();
-                    let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
-                    for (idx, letter) in self.guess.chars().enumerate() {
-                        word[idx].value = letter.clone();
-                        word[idx].set_state(LetterState::Incorrect);
-                    }
+//                    let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
+  //                  for (idx, letter) in self.guess.chars().enumerate() {
+    //                    word[idx].value = letter.clone();
+      //                  word[idx].set_state(LetterState::Incorrect);
+        //            }
                 }
             }
-            let word_count = egui::Label::new("Word Count: ".to_string() + &self.downloaded_words.len().to_string());
-            ui.add(word_count);
+     //       let word_count = egui::Label::new("Word Count: ".to_string() + &self.downloaded_words.len().to_string());
+     //       ui.add(word_count);
         });
     }
 }

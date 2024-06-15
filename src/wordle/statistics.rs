@@ -1,7 +1,6 @@
 use std::collections::hash_set::HashSet;
-use crate::wordle;
 use crate::wordle::letter_probability::LetterProbability;
-use super::{Letter, MAX_LETTERS, Word};
+use super::{MAX_LETTERS, Word};
 
 #[derive(Debug, Clone)]
 pub struct Statistics {
@@ -36,7 +35,7 @@ impl Statistics {
     pub fn guess(self: &mut Self) -> String {
         let mut probability = LetterProbability::default();
         for word in self.all_words.iter() {
-            if (!self.filtered(word)) {
+            if  !self.filtered(word) {
                 probability.add_word(&word.clone());
             }
         }
@@ -46,7 +45,7 @@ impl Statistics {
 
 
         for word in self.all_words.iter() {
-            let mut score = probability.score_word(&word.clone());
+            let score = probability.score_word(&word.clone());
             if score > guessed_word_score {
                 guessed_word_score = score;
                 guessed_word = word.clone();
@@ -56,7 +55,7 @@ impl Statistics {
         guessed_word
     }
 
-    fn filtered(self: &mut Self, word: &String) -> bool {
+    fn filtered(self: &Self, word: &String) -> bool {
         for filter in self.filters.iter() {
             if filter.filter(word) {
                 return true;

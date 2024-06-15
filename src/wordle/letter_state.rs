@@ -26,6 +26,7 @@
         }
     }
 
+
     #[cfg(test)]
     mod letter_state_tests {
         use super::*;

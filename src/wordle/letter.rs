@@ -49,7 +49,6 @@ impl Letter {
 
 #[cfg(test)]
 mod letter_tests {
-    use egui::CursorIcon::Default;
     use super::*;
 
     #[test]

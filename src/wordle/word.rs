@@ -16,7 +16,7 @@ impl Default for Word {
 }
 
 impl Word {
-    pub fn filter(self: &mut Self, str: &String) -> bool {
+    pub fn filter(self: &Self, str: &String) -> bool {
         for (letter_idx, letter) in self.letters.iter().enumerate() {
             match letter.get_state() {
                 LetterState::Disabled => {
@@ -41,5 +41,55 @@ impl Word {
             }
         }
         false
+    }
+}
+
+#[cfg(test)]
+mod word_tests {
+    use super::*;
+
+    #[test]
+    fn default() {
+        let result: Word = Default::default();
+        assert_eq!(result.letters.len(), MAX_LETTERS);
+    }
+
+    #[test]
+    fn filter() {
+        let mut word: Word = Default::default();
+        word.letters[0].value = 'a';
+        word.letters[0].set_state(LetterState::Present);
+
+        word.letters[1].value = 'b';
+        word.letters[1].set_state(LetterState::Present);
+
+        word.letters[2].value = 'c';
+        word.letters[2].set_state(LetterState::Present);
+
+        word.letters[3].value = 'd';
+        word.letters[3].set_state(LetterState::Present);
+
+        word.letters[4].value = 'e';
+        word.letters[4].set_state(LetterState::Present);
+
+        let str = String::from("abcde");
+        assert_eq!(word.filter(&str), false);
+
+        word.letters[4].set_state(LetterState::Correct);
+        assert_eq!(word.filter(&str), false);
+
+
+        word.letters[4].set_state(LetterState::Incorrect);
+        assert_eq!(word.filter(&str), true);
+
+        word.letters[4].set_state(LetterState::Disabled);
+    }
+
+    #[test]
+    #[should_panic]
+    fn filter_panic() {
+        let word: Word = Default::default();
+        let str = String::from("abcde");
+        word.filter(&str);
     }
 }

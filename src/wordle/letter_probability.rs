@@ -1,6 +1,5 @@
 use std::default::Default;
-use std::collections::HashSet;
-use crate::wordle::{Board, MAX_ATTEMPTS, MAX_LETTERS, Word};
+use crate::wordle::{MAX_LETTERS};
 
 #[derive(Debug, Clone)]
 pub struct LetterProbability {
@@ -28,7 +27,7 @@ impl LetterProbability {
     }
 
     fn add_letter(self: &mut Self, letter: &char, index: usize) {
-        let &mut mut map = self.counts.iter_mut().nth(index).unwrap();
+        let map = self.counts.iter_mut().nth(index).unwrap();
         let &letter = &letter.to_lowercase().nth(0).unwrap();
         if let Some(count) = map.get_mut(&letter) {
             *count = *count + 1;
@@ -45,7 +44,7 @@ impl LetterProbability {
             let value = map.get(&letter);
             match value {
                 Some(value) => {
-                    let mut num : f64 = *value as f64;
+                    let num : f64 = *value as f64;
                     ret += num / self.word_count as f64;
                 }
                 None => { return 0.0f64; }

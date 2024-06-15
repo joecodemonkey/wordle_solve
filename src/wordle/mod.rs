@@ -10,4 +10,3 @@ pub use letter::*;
 pub use word::*;
 pub use board::*;
 pub use statistics::*;
-pub use letter_probability::*;
