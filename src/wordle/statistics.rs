@@ -26,12 +26,6 @@ impl Statistics {
         self.all_words.insert(word.clone());
     }
 
-    pub fn add_words(self: &mut Self, words: &Vec<String>) {
-        for word in words {
-            self.all_words.insert(word.to_string());
-        };
-    }
-
     pub fn guess(self: &mut Self) -> String {
         let mut probability = LetterProbability::default();
         for word in self.all_words.iter() {
@@ -66,5 +60,75 @@ impl Statistics {
 
     pub fn clear(self: &mut Self) {
         self.all_words.clear();
+    }
+}
+
+
+
+#[cfg(test)]
+mod statistics_tests {
+    use crate::wordle::LetterState;
+    use super::*;
+
+    #[test]
+    fn default() {
+        let result: Statistics = Default::default();
+        assert_eq!(result.all_words.len(), 0);
+        assert_eq!(result.filters.len(), 0);
+    }
+
+    #[test]
+    fn add_word() {
+        let mut result: Statistics = Default::default();
+        result.add_word(&String::from("test"));
+        assert_eq!(result.all_words.len(), 1);
+        assert_eq!(result.all_words.contains(&String::from("test")), true);
+    }
+
+    #[test]
+    fn guess() {
+        let mut result: Statistics = Default::default();
+        result.add_word(&String::from("tests"));
+        result.add_word(&String::from("tesas"));
+        result.add_word(&String::from("tists"));
+        result.add_word(&String::from("tescs"));
+        result.add_word(&String::from("tasds"));
+
+        let guess = result.guess();
+        assert_eq!(guess, "tests");
+
+        let mut filter = Word::default();
+        filter.letters[0].value = 't';
+        filter.letters[0].set_state(LetterState::Present);
+        filter.letters[1].value = 'e';
+        filter.letters[1].set_state(LetterState::Incorrect);
+        filter.letters[2].value = 's';
+        filter.letters[2].set_state(LetterState::Present);
+        filter.letters[3].value = 't';
+        filter.letters[3].set_state(LetterState::Present);
+        filter.letters[4].value = 's';
+        filter.letters[4].set_state(LetterState::Present);
+
+        result.filters.push(filter);
+
+        let guess = result.guess();
+        assert_eq!(guess, "tasds");
+
+        let mut filter = Word::default();
+        filter.letters[0].value = 't';
+        filter.letters[0].set_state(LetterState::Present);
+        filter.letters[1].value = 'a';
+        filter.letters[1].set_state(LetterState::Incorrect);
+        filter.letters[2].value = 's';
+        filter.letters[2].set_state(LetterState::Present);
+        filter.letters[3].value = 't';
+        filter.letters[3].set_state(LetterState::Present);
+        filter.letters[4].value = 's';
+        filter.letters[4].set_state(LetterState::Present);
+
+        result.filters.push(filter);
+
+        let guess = result.guess();
+        assert_eq!(guess, "tists");
     }
 }

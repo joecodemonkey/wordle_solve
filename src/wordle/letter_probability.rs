@@ -1,5 +1,5 @@
 use std::default::Default;
-use crate::wordle::{LetterState, MAX_LETTERS, Word};
+use crate::wordle::{MAX_LETTERS};
 
 #[derive(Debug, Clone)]
 pub struct LetterProbability {
@@ -54,7 +54,6 @@ impl LetterProbability {
         ret
     }
 }
-
 
 #[cfg(test)]
 mod letter_probability_tests {
