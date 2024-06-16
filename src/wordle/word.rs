@@ -32,6 +32,14 @@ impl Word {
                     if str.chars().nth(letter_idx).unwrap() == letter.value {
                         return true;
                     }
+
+                    for( idx, c) in str.chars().enumerate() {
+                        if c == letter.value {
+                            if self.letters[idx].get_state() != LetterState::Correct {
+                                return true;
+                            }
+                        }
+                    }
                 },
                 LetterState::Correct => {
                     if str.chars().nth(letter_idx).unwrap() != letter.value {
@@ -85,14 +93,19 @@ mod word_tests {
         let str = String::from("abcde");
         assert_eq!(word.filter(&str), false);
 
+        let str = String::from("abcdf");
+        assert_eq!(word.filter(&str), true);
+
+        let str = String::from("abcde");
         word.letters[4].set_state(LetterState::Correct);
         assert_eq!(word.filter(&str), false);
-
 
         word.letters[4].set_state(LetterState::Incorrect);
         assert_eq!(word.filter(&str), true);
 
-        word.letters[4].set_state(LetterState::Disabled);
+        let str = String::from("aaaae");
+        word.letters[0].set_state(LetterState::Incorrect);
+        assert_eq!(word.filter(&str), true);
     }
 
     #[test]

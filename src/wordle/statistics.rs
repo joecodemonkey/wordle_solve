@@ -43,6 +43,9 @@ impl Statistics {
 
 
         for word in self.all_words.iter() {
+            if self.filtered(word) {
+                continue;
+            }
             let score = probability.score_word(&word.clone());
             if score > guessed_word_score {
                 guessed_word_score = score;
@@ -71,7 +74,7 @@ impl Statistics {
 
 #[cfg(test)]
 mod statistics_tests {
-    use crate::wordle::LetterState;
+    use crate::wordle::{Letter, LetterState};
     use super::*;
 
     #[test]
@@ -92,47 +95,40 @@ mod statistics_tests {
     #[test]
     fn guess() {
         let mut result: Statistics = Default::default();
-        result.add_word(&String::from("tests"));
-        result.add_word(&String::from("tesas"));
-        result.add_word(&String::from("tists"));
-        result.add_word(&String::from("tescs"));
-        result.add_word(&String::from("tasds"));
 
-        let guess = result.guess();
-        assert_eq!(guess, "tests");
+        result.add_word(&String::from("abcde"));
 
         let mut filter = Word::default();
-        filter.letters[0].value = 't';
+
+        filter.letters[0].value = 'a';
         filter.letters[0].set_state(LetterState::Present);
-        filter.letters[1].value = 'e';
-        filter.letters[1].set_state(LetterState::Incorrect);
-        filter.letters[2].value = 's';
+
+        filter.letters[1].value = 'b';
+        filter.letters[1].set_state(LetterState::Present);
+
+        filter.letters[2].value = 'c';
         filter.letters[2].set_state(LetterState::Present);
-        filter.letters[3].value = 't';
+
+        filter.letters[3].value = 'd';
         filter.letters[3].set_state(LetterState::Present);
-        filter.letters[4].value = 's';
+
+        filter.letters[4].value = 'e';
         filter.letters[4].set_state(LetterState::Present);
 
-        result.filters.push(filter);
+        result.filters.push(filter.clone());
+
+        result.add_word(&String::from("abcdf"));
 
         let guess = result.guess();
-        assert_eq!(guess, "tasds");
+        assert_eq!(guess, "abcde");
 
-        let mut filter = Word::default();
-        filter.letters[0].value = 't';
-        filter.letters[0].set_state(LetterState::Present);
-        filter.letters[1].value = 'a';
-        filter.letters[1].set_state(LetterState::Incorrect);
-        filter.letters[2].value = 's';
-        filter.letters[2].set_state(LetterState::Present);
-        filter.letters[3].value = 't';
-        filter.letters[3].set_state(LetterState::Present);
-        filter.letters[4].value = 's';
-        filter.letters[4].set_state(LetterState::Present);
-
-        result.filters.push(filter);
+        filter.letters[4].value = 'e';
+        filter.letters[4].set_state(LetterState::Incorrect);
+        result.filters.clear();
+        result.filters.push(filter.clone());
 
         let guess = result.guess();
-        assert_eq!(guess, "tists");
+        assert_eq!(guess, "abcdf");
+
     }
 }

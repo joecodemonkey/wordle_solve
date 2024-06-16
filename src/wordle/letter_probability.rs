@@ -22,14 +22,13 @@ impl LetterProbability {
             panic!("Word Length must not exceed set length of {} characters", MAX_LETTERS);
         }
         for (index, letter) in word.chars().enumerate() {
-            self.add_letter(&letter, index);
+            self.add_letter(letter, index);
         }
         self.word_count += 1;
     }
 
-    fn add_letter(self: &mut Self, letter: &char, index: usize) {
+    fn add_letter(self: &mut Self, letter: char, index: usize) {
         let map = self.counts.iter_mut().nth(index).unwrap();
-        let &letter = &letter.to_lowercase().nth(0).unwrap();
         if let Some(count) = map.get_mut(&letter) {
             *count = *count + 1;
         }
