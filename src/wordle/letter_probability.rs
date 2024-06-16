@@ -1,5 +1,5 @@
 use std::default::Default;
-use crate::wordle::{MAX_LETTERS};
+use crate::wordle::{LetterState, MAX_LETTERS, Word};
 
 #[derive(Debug, Clone)]
 pub struct LetterProbability {
@@ -24,6 +24,7 @@ impl LetterProbability {
         for (index, letter) in word.chars().enumerate() {
             self.add_letter(&letter, index);
         }
+        self.word_count += 1;
     }
 
     fn add_letter(self: &mut Self, letter: &char, index: usize) {
@@ -51,5 +52,60 @@ impl LetterProbability {
             }
         }
         ret
+    }
+}
+
+
+#[cfg(test)]
+mod letter_probability_tests {
+    use super::*;
+
+    fn float_compare(a: f64, b: f64, digits: usize) -> bool {
+        let a_int = (a * 10f64.powi(digits as i32)).round() as i64;
+        let b_int = (b * 10f64.powi(digits as i32)).round() as i64;
+        a_int == b_int
+    }
+
+    #[test]
+    fn default() {
+        let result: LetterProbability = Default::default();
+        assert_eq!(result.counts.len(), MAX_LETTERS);
+        assert_eq!(result.word_count, 0);
+    }
+    #[test]
+    fn add_word() {
+        let mut result: LetterProbability = Default::default();
+        result.add_word(&String::from("hello"));
+        assert_eq!(result.word_count, 1);
+        assert_eq!(result.counts[0].get(&'h').unwrap(), &1u64);
+        assert_eq!(result.counts[0].get(&'e'), None);
+
+        assert_eq!(result.counts[1].get(&'e').unwrap(), &1u64);
+        assert_eq!(result.counts[1].get(&'k'), None);
+
+        assert_eq!(result.counts[2].get(&'l').unwrap(), &1u64);
+        assert_eq!(result.counts[2].get(&'z'), None);
+
+        assert_eq!(result.counts[3].get(&'l').unwrap(), &1u64);
+        assert_eq!(result.counts[3].get(&'z'), None);
+
+        assert_eq!(result.counts[4].get(&'o').unwrap(), &1u64);
+        assert_eq!(result.counts[4].get(&'z'), None);
+    }
+
+    #[test]
+    fn score_word() {
+        let mut result: LetterProbability = Default::default();
+        result.add_word(&String::from("hello"));
+        result.add_word(&String::from("world"));
+        assert!(float_compare(result.score_word(&String::from("hello")), 3.0f64, 3));
+        assert_eq!(result.score_word(&String::from("world")), 3.0f64);
+        assert_eq!(result.score_word(&String::from("horld")), 3.0f64);
+        result.add_word(&String::from("weird"));
+        assert!(float_compare(result.score_word(&String::from("hello")), 2.333f64, 3));
+        assert!(float_compare(result.score_word(&String::from("world")), 2.6666f64, 3));
+        assert!(float_compare(result.score_word(&String::from("horld")) , 2.3333f64, 3));
+
+        assert_eq!(result.score_word(&String::from("rends")), 0.0f64);
     }
 }
