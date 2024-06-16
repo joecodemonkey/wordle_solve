@@ -23,8 +23,12 @@ impl Word {
                     panic!("Got Disabled Letter State for letter in word that shouldn't be disabled?!?");
                 },
                 LetterState::Present => {
-                    str.chars().any(|c| c == letter.value);
+                    // if the string doesn't contain the letter, then it's not a match
                     if !str.contains(&letter.value.to_string()) {
+                        return true;
+                    }
+                    // if the letter in this exact index is the same, then it's not a match
+                    if str.chars().nth(letter_idx).unwrap() == letter.value {
                         return true;
                     }
                 },
