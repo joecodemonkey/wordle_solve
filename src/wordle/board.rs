@@ -29,8 +29,9 @@ impl Default for Board {
 
 #[cfg(test)]
 mod letter_tests {
-    use crate::wordle::LetterState;
     use super::*;
+    use super::super::{LetterState};
+    use super::super::super::{MAX_LETTERS};
 
     #[test]
     fn default() {

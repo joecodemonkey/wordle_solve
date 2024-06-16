@@ -75,26 +75,27 @@ impl eframe::App for WordleSolve {
 
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Button,
-                egui::FontId::new(20.0, eframe::epaint::FontFamily::Proportional),
+                egui::FontId::new(20.0, eframe::epaint::FontFamily::Monospace),
             );
 
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Heading,
-                egui::FontId::new(32.0, eframe::epaint::FontFamily::Proportional),
+                egui::FontId::new(32.0, eframe::epaint::FontFamily::Monospace),
             );
 
             ui.style_mut().text_styles.insert(
                 egui::TextStyle::Body,
-                egui::FontId::new(20.0, eframe::epaint::FontFamily::Proportional),
+                egui::FontId::new(20.0, eframe::epaint::FontFamily::Monospace),
             );
 
-            ui.label(egui::RichText::new("Wordle Solver").size(32.0));
+            ui.heading("Wordle Solver");
+
+            let url_label = egui::Label::new("Word Source URL");
             ui.horizontal(|ui| {
-
-                let name_label = ui.label(egui::RichText::new("Word Source URL").size(20.0));
-
-                ui.text_edit_singleline(&mut self.words_url)
-                    .labelled_by(name_label.id);
+                ui.add(url_label);
+            });
+            ui.horizontal(|ui| {
+                ui.text_edit_singleline(&mut self.words_url);
 
                 let download_button = egui::Button::new("↻");
 
@@ -106,7 +107,14 @@ impl eframe::App for WordleSolve {
             egui::Grid::new("wordle_squares").show(ui, |ui| {
                 for row in self.board.words.iter_mut() {
                     for col in row.letters.iter_mut() {
-                        if ui.add(egui::Button::new(col.value.to_string()).fill(col.get_color())).clicked() {
+
+                        let button_text = egui::RichText::new(col.value.to_string())
+                            .color(col.get_text_color());
+
+                        let button = egui::Button::new(button_text).
+                            fill(col.get_fill_color());
+
+                        if ui.add(button).clicked() {
                             col.toggle();
                         }
                     }
