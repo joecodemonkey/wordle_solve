@@ -30,7 +30,7 @@ impl Letter {
             LetterState::Disabled => egui::Color32::BLACK,
             LetterState::Present => egui::Color32::YELLOW,
             LetterState::Incorrect => egui::Color32::BLACK,
-            LetterState::Correct => egui::Color32::GREEN,
+            LetterState::Correct => egui::Color32::LIGHT_GREEN,
         }
     }
 
@@ -64,7 +64,7 @@ mod letter_tests {
         let mut result: Letter = Letter::default();
         result.set_state(LetterState::Correct);
         assert_eq!(result.get_state(), LetterState::Correct);
-        assert_eq!(result.get_color(), egui::Color32::GREEN);
+        assert_eq!(result.get_color(), egui::Color32::LIGHT_GREEN);
 
         result.set_state(LetterState::Incorrect);
         assert_eq!(result.get_state(), LetterState::Incorrect);

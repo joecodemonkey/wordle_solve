@@ -1,5 +1,5 @@
 use std::default::Default;
-use super::{MAX_LETTERS, Word};
+use super::{Word};
 
 #[derive(Debug, Clone)]
 pub struct Board {

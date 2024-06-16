@@ -2,15 +2,15 @@
 #![allow(rustdoc::missing_crate_level_docs)] // it's an example
 
 use std::error::Error;
-use eframe::egui;
+use eframe::{egui};
 use reqwest;
 mod wordle;
 use wordle::*;
 
 fn main() -> Result<(), eframe::Error> {
-    //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([640.0, 480.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([640.0, 480.0]). with_resizable(true),
+
         ..Default::default()
     };
 
@@ -47,8 +47,6 @@ impl Default for WordleSolve {
 }
 impl WordleSolve {
     fn download(&mut self) -> Result<(), Box<dyn Error>> {
-        // Download the file content
-
         let response = reqwest::blocking::get(self.words_url.as_str())?;
 
         match response.text() {
@@ -71,13 +69,33 @@ impl WordleSolve {
 }
 
 impl eframe::App for WordleSolve {
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Wordle Solver");
+
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Button,
+                egui::FontId::new(20.0, eframe::epaint::FontFamily::Proportional),
+            );
+
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Heading,
+                egui::FontId::new(32.0, eframe::epaint::FontFamily::Proportional),
+            );
+
+            ui.style_mut().text_styles.insert(
+                egui::TextStyle::Body,
+                egui::FontId::new(20.0, eframe::epaint::FontFamily::Proportional),
+            );
+
+            ui.label(egui::RichText::new("Wordle Solver").size(32.0));
             ui.horizontal(|ui| {
-                let name_label = ui.label("Word Source URL: ");
+
+                let name_label = ui.label(egui::RichText::new("Word Source URL").size(20.0));
+
                 ui.text_edit_singleline(&mut self.words_url)
                     .labelled_by(name_label.id);
+
                 let download_button = egui::Button::new("↻");
 
                 if ui.add(download_button).clicked() {

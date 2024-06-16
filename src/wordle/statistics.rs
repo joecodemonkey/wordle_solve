@@ -74,7 +74,7 @@ impl Statistics {
 
 #[cfg(test)]
 mod statistics_tests {
-    use crate::wordle::{Letter, LetterState};
+    use crate::wordle::{LetterState};
     use super::*;
 
     #[test]
