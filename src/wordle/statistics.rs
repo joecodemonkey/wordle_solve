@@ -92,43 +92,61 @@ mod statistics_tests {
         assert_eq!(result.all_words.contains(&String::from("test")), true);
     }
 
+    fn default_word() -> Word {
+        let mut word: Word = Default::default();
+        word.letters[0].value = 'a';
+        word.letters[0].set_state(LetterState::Present);
+
+        word.letters[1].value = 'b';
+        word.letters[1].set_state(LetterState::Present);
+
+        word.letters[2].value = 'c';
+        word.letters[2].set_state(LetterState::Present);
+
+        word.letters[3].value = 'd';
+        word.letters[3].set_state(LetterState::Present);
+
+        word.letters[4].value = 'e';
+        word.letters[4].set_state(LetterState::Present);
+
+        word
+    }
+
     #[test]
-    fn guess() {
+    fn guess_present() {
         let mut result: Statistics = Default::default();
 
         result.add_word(&String::from("abcde"));
+        result.filters.push(default_word().clone());
 
-        let mut filter = Word::default();
+        // The word is filtered out so the guess should be empty
+        assert_eq!(result.guess(), "");
 
-        filter.letters[0].value = 'a';
-        filter.letters[0].set_state(LetterState::Present);
+        // The word is not filtered out so the guess should be the word
+        result.add_word(&String::from("edbca"));
+        assert_eq!(result.guess(), "edbca");
 
-        filter.letters[1].value = 'b';
-        filter.letters[1].set_state(LetterState::Present);
-
-        filter.letters[2].value = 'c';
-        filter.letters[2].set_state(LetterState::Present);
-
-        filter.letters[3].value = 'd';
-        filter.letters[3].set_state(LetterState::Present);
-
-        filter.letters[4].value = 'e';
-        filter.letters[4].set_state(LetterState::Present);
-
+        let mut filter = default_word().clone();
+        filter.letters[0].set_state(LetterState::Incorrect);
         result.filters.push(filter.clone());
 
-        result.add_word(&String::from("abcdf"));
+        // The word is filtered out so the guess should be empty
+        assert_eq!(result.guess(), "");
+    }
 
-        let guess = result.guess();
-        assert_eq!(guess, "abcde");
+    #[test]
+    fn clear() {
+        let mut result: Statistics = Default::default();
+        result.add_word(&String::from("test"));
+        assert_eq!(result.all_words.len(), 1);
+        result.clear();
+        assert_eq!(result.all_words.len(), 0);
+    }
 
-        filter.letters[4].value = 'e';
-        filter.letters[4].set_state(LetterState::Incorrect);
-        result.filters.clear();
-        result.filters.push(filter.clone());
-
-        let guess = result.guess();
-        assert_eq!(guess, "abcdf");
-
+    #[test]
+    #[should_panic]
+    fn add_word_panic() {
+        let mut result: Statistics = Default::default();
+        result.add_word(&String::from("testtest"));
     }
 }

@@ -76,8 +76,7 @@ mod word_tests {
         assert_eq!(result.letters.len(), MAX_LETTERS);
     }
 
-    #[test]
-    fn filter() {
+    fn get_default_word() -> Word {
         let mut word: Word = Default::default();
         word.letters[0].value = 'a';
         word.letters[0].set_state(LetterState::Present);
@@ -94,15 +93,23 @@ mod word_tests {
         word.letters[4].value = 'e';
         word.letters[4].set_state(LetterState::Present);
 
+        word
+    }
+
+    #[test]
+    fn filter() {
+
+        let mut word = get_default_word().clone();
+
         let str = String::from("abcde");
-        assert_eq!(word.filter(&str), false);
+        assert_eq!(word.filter(&str), true);
 
         let str = String::from("abcdf");
         assert_eq!(word.filter(&str), true);
 
         let str = String::from("abcde");
         word.letters[4].set_state(LetterState::Correct);
-        assert_eq!(word.filter(&str), false);
+        assert_eq!(word.filter(&str), true);
 
         word.letters[4].set_state(LetterState::Incorrect);
         assert_eq!(word.filter(&str), true);
