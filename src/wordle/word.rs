@@ -42,6 +42,16 @@ impl Word {
         }
         false
     }
+
+    pub fn set(self: &mut Self, word: &String) {
+        if word.len() > MAX_LETTERS {
+            panic!("Word {} of length {} is greater than allowed length {}", word, word.len(), MAX_LETTERS)
+        }
+        for (index, letter) in word.chars().enumerate() {
+            self.letters[index].value = letter;
+            self.letters[index].set_state(LetterState::Incorrect);
+        }
+    }
 }
 
 #[cfg(test)]

@@ -34,7 +34,6 @@ struct WordleSolve {
     statistics: Statistics,
 }
 
-
 impl Default for WordleSolve {
     fn default() -> Self {
         Self {
@@ -98,17 +97,26 @@ impl eframe::App for WordleSolve {
             });
             let guess_button = egui::Button::new("Guess");
             if ui.add(guess_button).clicked() {
+                self.statistics.filters.clear();
+                for word in self.board.words.iter() {
+                    if word.letters.iter().all(|letter| letter.get_state() == LetterState::Disabled) {
+                        continue;
+                    }
+                    self.statistics.filters.push(word.clone());
+                }
                 if self.guess_num < MAX_ATTEMPTS {
                     self.guess_num += 1;
-//                    let word = self.board.iter_mut().nth(self.guess_num - 1).unwrap();
-  //                  for (idx, letter) in self.guess.chars().enumerate() {
-    //                    word[idx].value = letter.clone();
-      //                  word[idx].set_state(LetterState::Incorrect);
-        //            }
+                    self.guess = self.statistics.guess();
+                    self.board.set_word(self.guess_num - 1, &self.guess);
+                    let word = self.board.words.iter_mut().nth(self.guess_num - 1).unwrap();
+                    for (idx, letter) in self.guess.chars().enumerate() {
+                        word.letters[idx].value = letter.clone();
+                        word.letters[idx].set_state(LetterState::Incorrect);
+                   }
                 }
             }
-     //       let word_count = egui::Label::new("Word Count: ".to_string() + &self.downloaded_words.len().to_string());
-     //       ui.add(word_count);
+            let word_count = egui::Label::new("Word Count: ".to_string() + &self.statistics.len().to_string());
+            ui.add(word_count);
         });
     }
 }

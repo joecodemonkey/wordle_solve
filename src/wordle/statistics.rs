@@ -18,6 +18,10 @@ impl Default for Statistics {
 }
 
 impl Statistics {
+    pub fn len(self: &Self) -> usize {
+        self.all_words.len()
+    }
+
     pub fn add_word(self: &mut Self, word: &String) {
         if word.len() > MAX_LETTERS {
             panic!("Word {} of length {} is greater than allowed length {}", word, word.len(), MAX_LETTERS)

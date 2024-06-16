@@ -8,6 +8,17 @@ pub struct Board {
 
 pub const MAX_ATTEMPTS: usize = 6;
 
+impl Board {
+    pub fn set_word(self: &mut Self, index: usize,  word: &String,) {
+        if index >= MAX_ATTEMPTS {
+            println!("Index {} is greater than allowed length {}", index, MAX_ATTEMPTS)
+        } else {
+            self.words[index].set(word);
+            self.words[index].letters.iter_mut().for_each( |letter| letter.set_state(crate::wordle::LetterState::Incorrect));
+        }
+    }
+}
+
 impl Default for Board {
     fn default() -> Self {
         Board {
