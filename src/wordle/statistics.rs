@@ -68,6 +68,10 @@ impl Statistics {
     pub fn clear(self: &mut Self) {
         self.all_words.clear();
     }
+
+    pub fn remove_word(self: &mut Self, word: &String) {
+        self.all_words.remove(word);
+    }
 }
 
 
