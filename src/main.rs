@@ -151,6 +151,14 @@ impl eframe::App for WordleSolve {
                         }
                     }
                 }
+                let again_button = egui::Button::new("Play Again");
+                if ui.add(again_button).on_hover_text("Play again without redownloading dictionary").clicked() {
+                    self.statistics.filters.clear();
+                    self.board = Board::default();
+                    self.guess = "".to_string();
+                    self.guess_num = 0;
+                }
+
             });
             let word_count = egui::Label::new("Words in Dictionary: ".to_string() + &self.statistics.len().to_string());
             ui.add(word_count);
@@ -162,18 +170,21 @@ impl eframe::App for WordleSolve {
                     "No valid guesses left"
                 };
             }
-            let button_text = egui::RichText::new(end_text)
+            let guess_text = egui::RichText::new(end_text)
                 .color(egui::Color32::RED);
-            let guess_label = egui::Label::new(button_text);
+            let guess_label = egui::Label::new(guess_text);
             ui.add(guess_label);
 
             ui.horizontal(|ui| {
-                let url_label = egui::Label::new("Dictionary Source URL");
-
+                let url_label = egui::Label::new("Dictionary Source URL:");
                 ui.add(url_label);
-
-                let mut text_edit = egui::TextEdit::singleline(&mut self.words_url).desired_width(400.0);
-
+            });
+            ui.horizontal(|ui| {
+                ui.style_mut().text_styles.insert(
+                    egui::TextStyle::Body,
+                    egui::FontId::new(14.0, eframe::epaint::FontFamily::Monospace),
+                );
+                let mut text_edit = egui::TextEdit::singleline(&mut self.words_url).desired_width(600.0);
                 ui.add(text_edit);
             });
             if reset {
